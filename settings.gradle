@@ -1,0 +1,4 @@
+rootProject.name = 'wikipedia-processor'
+include 'flux-http-module'
+findProject(':flux-http-module')?.name = 'flux-http-client'
+
