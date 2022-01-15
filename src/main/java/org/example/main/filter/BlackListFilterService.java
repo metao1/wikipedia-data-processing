@@ -8,7 +8,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,27 +35,24 @@ public class BlackListFilterService implements FilterService<LogEntry> {
     private List<LogEntry> getBlackListFilteredLogEntries(List<String> blackList, List<LogEntry> logEntries) {
         List<LogEntry> result = new LinkedList<>();
         var map = buildMapFromBlackList(blackList);
-        for (LogEntry le : logEntries) {
-            var dapt = le.getDomainCodeAndPageTitle();
-            if (!containsInBlacklist(map, dapt)) {
-                result.add(le);
-            }
-        }
-        return result;
+        return logEntries
+                .stream()
+                .filter(f -> map.contains(f.getDomainCodeAndPageTitle()))
+                .collect(Collectors.toCollection(LinkedList::new));
     }
 
-    private Map<String, String> buildMapFromBlackList(List<String> blackList) {
+    private Set<String> buildMapFromBlackList(List<String> blackList) {
         return Flux.fromStream(blackList.stream())
                 .map(LogEntryUtils::parseLineBlacklistLogEntry)
                 .onErrorReturn(new LogEntry("", "", 0))
                 .filter(le -> StringUtils.notBlank(le.getDomainCode()))
                 .map(LogEntry::getDomainCodeAndPageTitle)
                 .distinct(Function.identity())
-                .collect(Collectors.toMap(String::valueOf, String::valueOf))
+                .collect(Collectors.toSet())
                 .block();
     }
 
-    private static boolean containsInBlacklist(Map<String, String> blacklistSet, String item) {
-        return blacklistSet.containsKey(item);
+    private static boolean containsInBlacklist(Set<String> blacklistSet, String item) {
+        return blacklistSet.contains(item);
     }
 }

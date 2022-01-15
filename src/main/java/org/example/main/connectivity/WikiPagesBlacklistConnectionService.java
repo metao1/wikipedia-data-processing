@@ -2,7 +2,6 @@ package org.example.main.connectivity;
 
 import org.example.main.util.CollectionUtils;
 import org.example.main.util.FileUtils;
-import org.example.main.util.StreamUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,19 +27,18 @@ public class WikiPagesBlacklistConnectionService implements BlackListConnectivit
         boolean blackListFileMissed = blackListFileMissed(blacklistPath);
         if (blackListFileMissed) {
             createBlackListFile(blacklistPath);
-            InputStream is = fetchRemoteBlackList(blacklistUrl);
-            StreamUtils.saveInputStreamToFile(is, blacklistPath);
+            fetchRemoteBlackListAndSaveInDisk(blacklistUrl, blacklistPath);
         }
         List<String> lines = readBlacklistFile(blacklistPath);
         return CollectionUtils.nonEmptyListConvertor(lines);
     }
 
-    private InputStream fetchRemoteBlackList(String blacklistUrl) {
+    private void fetchRemoteBlackListAndSaveInDisk(String blacklistUrl, Path path) {
         try (InputStream inputStream = httpConnection.get(blacklistUrl)) {
             if (inputStream == null) {
                 throw new RuntimeException("could not retrieve stream from blacklist service");
             }
-            return inputStream;
+            FileUtils.copyInputStreamToFile(inputStream, path);
         } catch (IOException ex) {
             throw new RuntimeException(ex.getMessage());
         }

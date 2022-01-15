@@ -63,7 +63,7 @@ public class LogEntry implements Comparable<LogEntry> {
     }
 
     private static final Comparator<LogEntry> COMPARATOR = Comparator
-            .comparing(LogEntry::getDomainCode, nullsLast(reverseOrder()))
+            .comparing(LogEntry::getDomainCode)
             .thenComparing(LogEntry::getDomainCodeAndPageTitle, nullsLast(reverseOrder()))
             .thenComparing(LogEntry::getCountViews, nullsLast(reverseOrder()));
 

@@ -17,7 +17,7 @@ public class FileUtils {
         try (OutputStream output = new FileOutputStream(path.toFile())) {
             input.transferTo(output);
         } catch (IOException ioException) {
-            System.err.println(ioException.getMessage());
+            System.err.println("error while save input to file:" + ioException.getMessage());
         }
     }
 
@@ -30,6 +30,19 @@ public class FileUtils {
             return Files.readAllLines(path, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public static void checkDirectory(Path out) {
+        if (FileUtils.fileNotExists(out)) {
+            try {
+                Files.createDirectories(out.getParent());
+                System.out.printf("directory %s created%n", out);
+            } catch (IOException e) {
+                System.err.println("error while creating directory:" + e.getMessage());
+            }
+        } else {
+            System.out.println("skipping processing since file " + out.getFileName() + " already exists");
         }
     }
 
