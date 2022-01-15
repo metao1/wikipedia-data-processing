@@ -1,5 +1,6 @@
 package org.example.main.util;
 
+import java.time.Duration;
 import java.time.format.DateTimeFormatter;
 
 public class Constants {
@@ -13,4 +14,6 @@ public class Constants {
     public static final String WIKIPEDIA_PAGE_VIEW_DIR = "page_views";
     public static final String WIKI_PATH_REGEX = "([\\d]{8})-([\\d]{6})";
     public static final String URL_REGEX = WIKIPEDIA_BASE_PAGE_VIEW_URL + "([\\/]?[\\-]?([\\w]+[\\/]?)(.gz)?)+";
+    public static final int MAX_IO_THREAD_COUNT = 3;
+    public static final Duration TIMEOUT = Duration.ofSeconds(120);
 }

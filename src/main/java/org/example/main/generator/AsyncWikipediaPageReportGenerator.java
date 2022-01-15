@@ -4,6 +4,7 @@ import org.example.main.connectivity.WikipediaPageViewConnectService;
 import org.example.main.filter.FilterService;
 import org.example.main.model.LogEntry;
 import org.example.main.storage.StorageService;
+import org.example.main.util.Constants;
 import org.example.main.util.FileUtils;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -20,19 +21,18 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
 
     private final StorageService<Set<LogEntry>, Path> storageService;
     private final ExecutorService ioExecutor;
-    private final ExecutorService cpuExecutor;
-    private static final int MAX_IO_THREAD_COUNT = 3;
+    private final ExecutorService executor;
 
     public AsyncWikipediaPageReportGenerator(FilterService<LogEntry> filterService, WikipediaPageViewConnectService connectService, StorageService<Set<LogEntry>, Path> fileStorage, int threshold) {
         super(connectService, filterService, threshold);
         this.storageService = fileStorage;
-        this.ioExecutor = Executors.newFixedThreadPool(MAX_IO_THREAD_COUNT);
-        this.cpuExecutor = Executors.newCachedThreadPool(Thread::new);
+        this.ioExecutor = Executors.newFixedThreadPool(Constants.MAX_IO_THREAD_COUNT);
+        this.executor = Executors.newCachedThreadPool();
     }
 
     @Override
     protected void saveToDevice(Tuple2<Set<LogEntry>, Path> tuple2) {
-        CompletableFuture.runAsync(() -> saveToDevicePipeline(tuple2), ioExecutor);
+        CompletableFuture.runAsync(() -> saveToDevicePipeline(tuple2), executor);
     }
 
     private CompletableFuture<Tuple2<Set<LogEntry>, Path>> mapSortedLogEntriesPipeline(Tuple2<String, Path> tuple2) {
@@ -49,14 +49,14 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
                 .thenComposeAsync((tuple3) -> CompletableFuture.supplyAsync(() -> {
                     List<LogEntry> filteredLogEntries = filterBlackList(tuple3.getT3(), tuple3.getT1());
                     return Tuples.of(tuple3.getT1(), tuple3.getT2(), filteredLogEntries);
-                }), cpuExecutor)
+                }), executor)
                 .thenComposeAsync(tuple3 -> CompletableFuture.supplyAsync(() -> {
                     Set<LogEntry> logEntries = mapSortingLogEntries(tuple3.getT3());
                     return Tuples.of(logEntries, tuple3.getT2());
-                }), cpuExecutor)
+                }), executor)
                 .handle((res, err) -> {
                     if (err != null) {
-                        exit();
+                        System.err.println(err.getMessage());
                     }
                     return res;
                 });
@@ -74,7 +74,7 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
 
     public void exit() {
         exitExecutor(ioExecutor);
-        exitExecutor(cpuExecutor);
+        exitExecutor(executor);
     }
 
     private void exitExecutor(ExecutorService pool) {

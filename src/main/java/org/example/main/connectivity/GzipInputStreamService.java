@@ -5,11 +5,13 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class GzipConnectionService implements ConnectionService {
+/**
+ * Defines Gzip Input streaming implementation.
+ */
+public class GzipInputStreamService implements InputStreamConnectionService {
 
     @Override
     public InputStream get(String strUrl) throws IOException {
-        //using async client
         URL url = new URL(strUrl);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestProperty("Accept-Encoding", "gzip");

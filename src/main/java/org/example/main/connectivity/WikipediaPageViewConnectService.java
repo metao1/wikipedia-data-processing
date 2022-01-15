@@ -17,9 +17,9 @@ import static org.example.main.util.Constants.WIKIPEDIA_PAGE_VIEW_DIR;
 
 public class WikipediaPageViewConnectService {
 
-    private final ConnectionService connectionService;
+    private final InputStreamConnectionService connectionService;
 
-    public WikipediaPageViewConnectService(ConnectionService connectionService) {
+    public WikipediaPageViewConnectService(InputStreamConnectionService connectionService) {
         this.connectionService = connectionService;
     }
 

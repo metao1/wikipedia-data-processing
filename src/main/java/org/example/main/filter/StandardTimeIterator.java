@@ -7,6 +7,13 @@ import java.time.format.DateTimeParseException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * StandardTimeIterator uses Iterate Pattern Design creates iteration over hours,
+ * in the period of start to end datetime, for navigation over spectrum of LocalDateTimes.
+ * It simply implements the Interator interface that allow foreach() and also converting to different
+ * Data Collectors like List or Set freely.
+ * The class uses TimeInterface to connect to other Parsers and fetches data collection repository using this interface.
+ */
 public class StandardTimeIterator implements Iterator<LocalDateTime> {
 
     private final TimeInterface timeInterface;
@@ -21,7 +28,9 @@ public class StandardTimeIterator implements Iterator<LocalDateTime> {
 
     @Override
     public boolean hasNext() {
-        return timeInterface.getCurrentTime().isBefore(timeInterface.getEndTime()) && !timeInterface.getCurrentTime().isEqual(timeInterface.getEndTime());
+        // checks if head reaches to the end of end time we set
+        return timeInterface.getCurrentTime().isBefore(timeInterface.getEndTime()) &&
+                !timeInterface.getCurrentTime().isEqual(timeInterface.getEndTime());
     }
 
     @Override
@@ -29,6 +38,7 @@ public class StandardTimeIterator implements Iterator<LocalDateTime> {
         if (!hasNext()) {
             throw new NoSuchElementException("end of times reached");
         }
+        //gets current time and move head to the next hour in list
         var ret = timeInterface.getCurrentTime();
         timeInterface.updateCurrentTimeUtc(ret.plusHours(1));
         return ret;

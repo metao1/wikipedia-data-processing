@@ -4,7 +4,6 @@ import org.example.main.connectivity.WikipediaPageViewConnectService;
 import org.example.main.filter.FilterService;
 import org.example.main.model.LogEntry;
 import org.example.main.model.PageViewItem;
-import org.example.main.util.CollectionUtils;
 import org.example.main.util.Constants;
 import org.example.main.util.FileUtils;
 import org.example.main.util.StringUtils;
@@ -13,10 +12,11 @@ import reactor.util.function.Tuple2;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+/**
+ * An abstract class that defines the reporting procedure for Top Page View visitors of Wikipedia
+ */
 public abstract class PageViewReportGenerator {
     protected final WikipediaPageViewConnectService wikiConnector;
     protected final FilterService<LogEntry> filterService;
@@ -37,7 +37,6 @@ public abstract class PageViewReportGenerator {
                 .filter(Objects::nonNull)
                 .map(Tuple2::getT2)
                 .collect(Collectors.toList());
-        exit();
         return collect;
     }
 

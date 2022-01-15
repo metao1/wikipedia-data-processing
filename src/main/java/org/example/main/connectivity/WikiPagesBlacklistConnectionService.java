@@ -14,9 +14,9 @@ import static org.example.main.util.Constants.BLACKLIST_FILENAME;
 
 public class WikiPagesBlacklistConnectionService implements BlackListConnectivityService {
 
-    private final ConnectionService httpConnection;
+    private final InputStreamConnectionService httpConnection;
 
-    public WikiPagesBlacklistConnectionService(ConnectionService httpConnection) {
+    public WikiPagesBlacklistConnectionService(InputStreamConnectionService httpConnection) {
         this.httpConnection = httpConnection;
     }
 

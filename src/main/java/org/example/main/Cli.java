@@ -1,14 +1,14 @@
 package org.example.main;
 
-import org.example.main.connectivity.GzipConnectionService;
-import org.example.main.connectivity.StreamConnectionService;
+import org.example.main.connectivity.GzipInputStreamService;
+import org.example.main.connectivity.StandardInputStreamService;
 import org.example.main.connectivity.WikiPagesBlacklistConnectionService;
 import org.example.main.connectivity.WikipediaPageViewConnectService;
 import org.example.main.filter.BlackListFilterService;
 import org.example.main.generator.AsyncWikipediaPageReportGenerator;
-import org.example.main.parser.ArgumentParser;
+import org.example.main.parser.StandardDateArgumentParser;
 import org.example.main.storage.WikiPageViewFileOperator;
-import org.example.main.util.StandardTimeUtils;
+import org.example.main.util.TimeUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -22,13 +22,13 @@ public class Cli {
             System.err.println(usage);
             System.exit(1);
         }
-        var argParser = new ArgumentParser(args);
+        var argParser = new StandardDateArgumentParser(args);
         var timeIterator = argParser.parse();
-        List<LocalDateTime> timeList = StandardTimeUtils.getTimeList(timeIterator);
-        var connectionService = new StreamConnectionService();
+        List<LocalDateTime> timeList = TimeUtils.getTimeList(timeIterator);
+        var connectionService = new StandardInputStreamService();
         var blackListService = new WikiPagesBlacklistConnectionService(connectionService);
         var bls = new BlackListFilterService(blackListService);
-        var wikiPageOperator = new WikipediaPageViewConnectService(new GzipConnectionService());
+        var wikiPageOperator = new WikipediaPageViewConnectService(new GzipInputStreamService());
         var fileStorage = new WikiPageViewFileOperator();
         var worker = new AsyncWikipediaPageReportGenerator(bls, wikiPageOperator, fileStorage, 25);
         var operatedPaths = worker.execute(timeList);
