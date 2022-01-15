@@ -37,7 +37,7 @@ public class BlackListFilterService implements FilterService<LogEntry> {
         var map = buildMapFromBlackList(blackList);
         return logEntries
                 .stream()
-                .filter(f -> f != null && map.contains(f.getDomainCodeAndPageTitle()))
+                .filter(f -> f != null && !map.contains(f.getDomainCodeAndPageTitle()))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 

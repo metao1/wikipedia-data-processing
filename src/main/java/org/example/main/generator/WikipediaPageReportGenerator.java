@@ -37,7 +37,7 @@ public class WikipediaPageReportGenerator {
         this.threshold = threshold;
     }
 
-    public List<Path> execute(List<LocalDateTime> timeList) {
+    public List<Path> execute(List<LocalDateTime> timeList) throws InterruptedException {
         FileUtils.checkDirectory(Path.of(Constants.WIKIPEDIA_PAGE_VIEW_DIR, ":"));
         List<Path> executedPaths = timeList
                 .parallelStream()
@@ -59,7 +59,7 @@ public class WikipediaPageReportGenerator {
                 .map(Tuple2::getT2)
                 .collect(Collectors.toList());
         executor.shutdown();
-        //executor.awaitTermination(60, TimeUnit.SECONDS);
+        executor.awaitTermination(60, TimeUnit.SECONDS);
         return executedPaths;
     }
 
