@@ -33,11 +33,10 @@ public class BlackListFilterService implements FilterService<LogEntry> {
     }
 
     private List<LogEntry> getBlackListFilteredLogEntries(List<String> blackList, List<LogEntry> logEntries) {
-        List<LogEntry> result = new LinkedList<>();
         var map = buildMapFromBlackList(blackList);
         return logEntries
                 .stream()
-                .filter(f -> f != null && !map.contains(f.getDomainCodeAndPageTitle()))
+                .filter(item -> missedInBlacklist(map, item))
                 .collect(Collectors.toCollection(LinkedList::new));
     }
 
@@ -52,7 +51,7 @@ public class BlackListFilterService implements FilterService<LogEntry> {
                 .block();
     }
 
-    private static boolean containsInBlacklist(Set<String> blacklistSet, String item) {
-        return blacklistSet.contains(item);
+    private static boolean missedInBlacklist(Set<String> blacklistSet, LogEntry f) {
+        return f != null && !blacklistSet.contains(f.getDomainCodeAndPageTitle());
     }
 }

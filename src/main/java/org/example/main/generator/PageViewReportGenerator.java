@@ -55,12 +55,8 @@ public abstract class PageViewReportGenerator {
 
     protected abstract Tuple2<Set<LogEntry>, Path> getSortedEntries(Tuple2<String, Path> tuple);
 
-    public Set<LogEntry> fetchWikiPageViews(final String url) {
-        var id = StringUtils.extractIdentification(url);
-        List<LogEntry> logEntries = wikiConnector.fetchLogEntries(url);
-        List<LogEntry> nonEmpty = CollectionUtils.nonEmptyListConvertor(logEntries);
-        List<LogEntry> filteredLogEntries = filterBlackList(nonEmpty, id);
-        return mapSortingLogEntries(filteredLogEntries);
+    public List<LogEntry> fetchWikiPageViews(final String url) {
+        return wikiConnector.fetchLogEntries(url);
     }
 
     public Set<LogEntry> mapSortingLogEntries(List<LogEntry> logEntries) {
@@ -104,7 +100,8 @@ public abstract class PageViewReportGenerator {
         return i;
     }
 
-    private List<LogEntry> filterBlackList(List<LogEntry> logEntries, String id) {
+    public List<LogEntry> filterBlackList(List<LogEntry> logEntries, String url) {
+        var id = StringUtils.extractIdentification(url);
         System.out.printf("Thread %s started filtering %s%n", Thread.currentThread().getName(), id);
         return filterService.applyAndGetFilteredEntries(Constants.BLACKLIST_URL, logEntries);
     }
