@@ -5,7 +5,7 @@ import org.example.main.connectivity.StreamConnectionService;
 import org.example.main.connectivity.WikiPagesBlacklistConnectionService;
 import org.example.main.connectivity.WikipediaPageViewConnectService;
 import org.example.main.filter.BlackListFilterService;
-import org.example.main.generator.WikipediaPageReportGenerator;
+import org.example.main.generator.AsyncWikipediaPageReportGenerator;
 import org.example.main.parser.ArgumentParser;
 import org.example.main.storage.WikiPageViewFileOperator;
 import org.example.main.util.StandardTimeUtils;
@@ -30,7 +30,7 @@ public class Cli {
         var bls = new BlackListFilterService(blackListService);
         var wikiPageOperator = new WikipediaPageViewConnectService(new GzipConnectionService());
         var fileStorage = new WikiPageViewFileOperator();
-        var worker = new WikipediaPageReportGenerator(bls, wikiPageOperator, fileStorage, 25);
+        var worker = new AsyncWikipediaPageReportGenerator(bls, wikiPageOperator, fileStorage, 25);
         var operatedPaths = worker.execute(timeList);
         System.out.println("operatedPaths = " + operatedPaths);
         worker.exit();

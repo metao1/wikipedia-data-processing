@@ -4,13 +4,11 @@ import org.example.main.connectivity.WikipediaPageViewConnectService;
 import org.example.main.filter.FilterService;
 import org.example.main.model.LogEntry;
 import org.example.main.model.PageViewItem;
-import org.example.main.storage.FileStorage;
 import org.example.main.util.CollectionUtils;
 import org.example.main.util.Constants;
 import org.example.main.util.FileUtils;
 import org.example.main.util.StringUtils;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -18,66 +16,44 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-public class WikipediaPageReportGenerator {
+public abstract class PageViewReportGenerator {
+    protected final WikipediaPageViewConnectService wikiConnector;
+    protected final FilterService<LogEntry> filterService;
+    protected final int threshold;
 
-    private final ExecutorService executor;
-    private final WikipediaPageViewConnectService wikiConnector;
-    private final FilterService<LogEntry> filterService;
-    private final FileStorage<Set<LogEntry>, Path> fileStorage;
-    private final int threshold;
-
-    public WikipediaPageReportGenerator(FilterService<LogEntry> filterService, WikipediaPageViewConnectService connectService, FileStorage<Set<LogEntry>, Path> fileStorage, int threshold) {
-        this.executor = Executors.newFixedThreadPool(3);
+    public PageViewReportGenerator(WikipediaPageViewConnectService connectService, FilterService<LogEntry> filterService, int threshold) {
         this.filterService = filterService;
         this.wikiConnector = connectService;
-        this.fileStorage = fileStorage;
         this.threshold = threshold;
     }
 
-    public List<Path> execute(List<LocalDateTime> timeList) {
-        FileUtils.checkDirectory(Path.of(Constants.WIKIPEDIA_PAGE_VIEW_DIR, ":"));
-        List<Path> executedPaths = timeList
-                .parallelStream()
-                .map(wikiConnector::urlToPathTuple)
-                .map(this::mapSortedLogEntriesPipeline)
-                .map(CompletableFuture::join)
-                .peek(this::saveToDeviceAsync)
+    public List<Path> execute(List<LocalDateTime> timeList) throws InterruptedException {
+        checkIfWikiPageViewDirExist();
+        List<Path> collect = timeList.parallelStream()
+                .map(this::getUrlPathTuple)
+                .map(this::getSortedEntries)
+                .peek(this::saveToDevice)
                 .filter(Objects::nonNull)
                 .map(Tuple2::getT2)
                 .collect(Collectors.toList());
-        return executedPaths;
+        exit();
+        return collect;
     }
 
-    private void saveToDeviceAsync(Tuple2<Set<LogEntry>, Path> tuple2) {
-        CompletableFuture.runAsync(() -> saveToDevicePipeline(tuple2), executor);
+    protected abstract void saveToDevice(Tuple2<Set<LogEntry>, Path> entries);
+
+    protected abstract void exit() throws InterruptedException;
+
+
+    private void checkIfWikiPageViewDirExist() {
+        FileUtils.checkDirectory(Path.of(Constants.WIKIPEDIA_PAGE_VIEW_DIR, ":"));
     }
 
-    private CompletableFuture<Tuple2<Set<LogEntry>, Path>> mapSortedLogEntriesPipeline(Tuple2<String, Path> tuple) {
-        return CompletableFuture.supplyAsync(() -> {
-            String url = tuple.getT1();
-            Path filePath = tuple.getT2();
-            boolean missedFile = FileUtils.fileNotExists(filePath);
-            if (!missedFile) {
-                System.out.printf("Skipped processing request %s while file exists%n.", filePath);
-                return null;
-            }
-            Set<LogEntry> logEntries = fetchWikiPageViews(url);
-            return Tuples.of(logEntries, tuple.getT2());
-        }, executor);
-    }
-
-    public void saveToDevicePipeline(Tuple2<Set<LogEntry>, Path> logEntriesPathTuple) {
-        if (logEntriesPathTuple == null) {
-            return;
-        }
-        var logEntries = logEntriesPathTuple.getT1();
-        var filePath = logEntriesPathTuple.getT2();
-        System.out.printf("writing %d records in path: %s%n", logEntries.size(), filePath);
-        fileStorage.write(logEntries, filePath);
-    }
+    protected abstract Tuple2<Set<LogEntry>, Path> getSortedEntries(Tuple2<String, Path> tuple);
 
     public Set<LogEntry> fetchWikiPageViews(final String url) {
         var id = StringUtils.extractIdentification(url);
@@ -85,11 +61,6 @@ public class WikipediaPageReportGenerator {
         List<LogEntry> nonEmpty = CollectionUtils.nonEmptyListConvertor(logEntries);
         List<LogEntry> filteredLogEntries = filterBlackList(nonEmpty, id);
         return mapSortingLogEntries(filteredLogEntries);
-    }
-
-    private List<LogEntry> filterBlackList(List<LogEntry> logEntries, String id) {
-        System.out.printf("Thread %s started filtering %s%n", Thread.currentThread().getName(), id);
-        return filterService.applyAndGetFilteredEntries(Constants.BLACKLIST_URL, logEntries);
     }
 
     public Set<LogEntry> mapSortingLogEntries(List<LogEntry> logEntries) {
@@ -133,8 +104,13 @@ public class WikipediaPageReportGenerator {
         return i;
     }
 
-    public void exit() throws InterruptedException {
-        executor.shutdown();
-        executor.awaitTermination(60, TimeUnit.SECONDS);
+    private List<LogEntry> filterBlackList(List<LogEntry> logEntries, String id) {
+        System.out.printf("Thread %s started filtering %s%n", Thread.currentThread().getName(), id);
+        return filterService.applyAndGetFilteredEntries(Constants.BLACKLIST_URL, logEntries);
     }
+
+    private Tuple2<String, Path> getUrlPathTuple(LocalDateTime timeList) {
+        return wikiConnector.urlToPathTuple(timeList);
+    }
+
 }
