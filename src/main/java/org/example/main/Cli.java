@@ -33,5 +33,6 @@ public class Cli {
         var worker = new WikipediaPageReportGenerator(bls, wikiPageOperator, fileStorage, 25);
         var operatedPaths = worker.execute(timeList);
         System.out.println("operatedPaths = " + operatedPaths);
+        worker.exit();
     }
 }

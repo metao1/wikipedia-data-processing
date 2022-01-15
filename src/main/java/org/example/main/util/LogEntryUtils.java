@@ -10,10 +10,11 @@ import java.util.stream.Stream;
 public class LogEntryUtils {
 
     public static LogEntry parseLineLogEntry(String line) throws IndexOutOfBoundsException {
-        var s1 = line.indexOf(' ');
-        var s2 = line.indexOf(' ', s1 + 1);
-        var s3 = line.indexOf(' ', s2 + 1);
-        return new LogEntry(line.substring(0, s1), line.substring(s1 + 1, s2), Integer.parseInt(line.substring(s2 + 1, s3)));
+        var s = line.split("\\s");
+        if (s.length < 3) {
+            return null;
+        }
+        return new LogEntry(s[0], s[1], Integer.parseInt(s[2]));
     }
 
     public static LogEntry parseLineBlacklistLogEntry(String line) throws IndexOutOfBoundsException {

@@ -24,43 +24,49 @@ import java.util.stream.Collectors;
 public class WikipediaPageReportGenerator {
 
     private final ExecutorService executor;
-    private final WikipediaPageViewConnectService wikiOperator;
+    private final WikipediaPageViewConnectService wikiConnector;
     private final FilterService<LogEntry> filterService;
     private final FileStorage<Set<LogEntry>, Path> fileStorage;
     private final int threshold;
 
-    public WikipediaPageReportGenerator(FilterService<LogEntry> filterService, WikipediaPageViewConnectService wikiOperator, FileStorage<Set<LogEntry>, Path> fileStorage, int threshold) {
+    public WikipediaPageReportGenerator(FilterService<LogEntry> filterService, WikipediaPageViewConnectService connectService, FileStorage<Set<LogEntry>, Path> fileStorage, int threshold) {
         this.executor = Executors.newFixedThreadPool(3);
         this.filterService = filterService;
-        this.wikiOperator = wikiOperator;
+        this.wikiConnector = connectService;
         this.fileStorage = fileStorage;
         this.threshold = threshold;
     }
 
-    public List<Path> execute(List<LocalDateTime> timeList) throws InterruptedException {
+    public List<Path> execute(List<LocalDateTime> timeList) {
         FileUtils.checkDirectory(Path.of(Constants.WIKIPEDIA_PAGE_VIEW_DIR, ":"));
         List<Path> executedPaths = timeList
                 .parallelStream()
-                .map(wikiOperator::urlToPathTuple)
-                .map(tuple -> CompletableFuture.supplyAsync(() -> {
-                    String url = tuple.getT1();
-                    Path filePath = tuple.getT2();
-                    boolean missedFile = FileUtils.fileNotExists(filePath);
-                    if (!missedFile) {
-                        System.out.printf("Skipped processing request %s while file exists%n.", filePath);
-                        return null;
-                    }
-                    Set<LogEntry> logEntries = fetchWikiPageViews(url);
-                    return Tuples.of(logEntries, tuple.getT2());
-                }, executor))
+                .map(wikiConnector::urlToPathTuple)
+                .map(this::mapSortedLogEntriesPipeline)
                 .map(CompletableFuture::join)
-                .peek(result -> CompletableFuture.runAsync(() -> saveToDevicePipeline(result), executor))
+                .peek(this::saveToDeviceAsync)
                 .filter(Objects::nonNull)
                 .map(Tuple2::getT2)
                 .collect(Collectors.toList());
-        executor.shutdown();
-        executor.awaitTermination(60, TimeUnit.SECONDS);
         return executedPaths;
+    }
+
+    private void saveToDeviceAsync(Tuple2<Set<LogEntry>, Path> tuple2) {
+        CompletableFuture.runAsync(() -> saveToDevicePipeline(tuple2), executor);
+    }
+
+    private CompletableFuture<Tuple2<Set<LogEntry>, Path>> mapSortedLogEntriesPipeline(Tuple2<String, Path> tuple) {
+        return CompletableFuture.supplyAsync(() -> {
+            String url = tuple.getT1();
+            Path filePath = tuple.getT2();
+            boolean missedFile = FileUtils.fileNotExists(filePath);
+            if (!missedFile) {
+                System.out.printf("Skipped processing request %s while file exists%n.", filePath);
+                return null;
+            }
+            Set<LogEntry> logEntries = fetchWikiPageViews(url);
+            return Tuples.of(logEntries, tuple.getT2());
+        }, executor);
     }
 
     public void saveToDevicePipeline(Tuple2<Set<LogEntry>, Path> logEntriesPathTuple) {
@@ -75,7 +81,7 @@ public class WikipediaPageReportGenerator {
 
     public Set<LogEntry> fetchWikiPageViews(final String url) {
         var id = StringUtils.extractIdentification(url);
-        List<LogEntry> logEntries = wikiOperator.fetchLogEntries(url);
+        List<LogEntry> logEntries = wikiConnector.fetchLogEntries(url);
         List<LogEntry> nonEmpty = CollectionUtils.nonEmptyListConvertor(logEntries);
         List<LogEntry> filteredLogEntries = filterBlackList(nonEmpty, id);
         return mapSortingLogEntries(filteredLogEntries);
@@ -125,5 +131,10 @@ public class WikipediaPageReportGenerator {
             if (i++ % 1000000 == 0) System.out.printf("Processed %d entries%n", i);
         }
         return i;
+    }
+
+    public void exit() throws InterruptedException {
+        executor.shutdown();
+        executor.awaitTermination(60, TimeUnit.SECONDS);
     }
 }
