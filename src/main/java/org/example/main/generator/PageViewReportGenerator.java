@@ -12,10 +12,7 @@ import reactor.util.function.Tuple2;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -48,7 +45,6 @@ public abstract class PageViewReportGenerator {
 
     protected abstract void exit() throws InterruptedException;
 
-
     private void checkIfWikiPageViewDirExist() {
         FileUtils.checkDirectory(Path.of(Constants.WIKIPEDIA_PAGE_VIEW_DIR, ":"));
     }
@@ -60,7 +56,7 @@ public abstract class PageViewReportGenerator {
     }
 
     public Set<LogEntry> mapSortingLogEntries(List<LogEntry> logEntries) {
-        ConcurrentMap<String, PageViewItem> sortedSetMap = new ConcurrentHashMap<>();
+        Map<String, PageViewItem> sortedSetMap = new HashMap<>();
         int processedEntriesNum = calcUpdateTopPageViewsMap(logEntries, sortedSetMap);
         System.out.printf("Processed %d entries in total.%n", processedEntriesNum);
         Set<LogEntry> sortedSet = new TreeSet<>();
@@ -70,7 +66,7 @@ public abstract class PageViewReportGenerator {
         return sortedSet;
     }
 
-    private int calcUpdateTopPageViewsMap(List<LogEntry> logEntries, ConcurrentMap<String, PageViewItem> map) {
+    private int calcUpdateTopPageViewsMap(List<LogEntry> logEntries, Map<String, PageViewItem> map) {
         var i = 0;
         for (LogEntry le : logEntries) {
             var dc = le.getDomainCode();

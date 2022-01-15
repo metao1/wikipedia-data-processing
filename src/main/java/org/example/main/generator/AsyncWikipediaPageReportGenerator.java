@@ -21,12 +21,12 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
     private final StorageService<Set<LogEntry>, Path> storageService;
     private final ExecutorService ioExecutor;
     private final ExecutorService cpuExecutor;
-    private static final int MAX_THREAD_COUNT = 3;
+    private static final int MAX_IO_THREAD_COUNT = 3;
 
     public AsyncWikipediaPageReportGenerator(FilterService<LogEntry> filterService, WikipediaPageViewConnectService connectService, StorageService<Set<LogEntry>, Path> fileStorage, int threshold) {
         super(connectService, filterService, threshold);
         this.storageService = fileStorage;
-        this.ioExecutor = Executors.newFixedThreadPool(MAX_THREAD_COUNT);
+        this.ioExecutor = Executors.newFixedThreadPool(MAX_IO_THREAD_COUNT);
         this.cpuExecutor = Executors.newCachedThreadPool(Thread::new);
     }
 
@@ -41,7 +41,7 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
                     Path filePath = tuple2.getT2();
                     boolean missedFile = FileUtils.fileNotExists(filePath);
                     if (!missedFile) {
-                        System.out.printf("Skipped processing request %s while file exists%n.", filePath);
+                        System.out.printf("Skipped processing request %s while file exists.%n", filePath);
                         return null;
                     }
                     return Tuples.of(tuple2.getT1(), tuple2.getT2(), fetchWikiPageViews(url));
@@ -53,7 +53,13 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
                 .thenComposeAsync(tuple3 -> CompletableFuture.supplyAsync(() -> {
                     Set<LogEntry> logEntries = mapSortingLogEntries(tuple3.getT3());
                     return Tuples.of(logEntries, tuple3.getT2());
-                }), cpuExecutor);
+                }), cpuExecutor)
+                .handle((res, err) -> {
+                    if (err != null) {
+                        exit();
+                    }
+                    return res;
+                });
     }
 
     public void saveToDevicePipeline(Tuple2<Set<LogEntry>, Path> logEntriesPathTuple) {
@@ -67,17 +73,25 @@ public class AsyncWikipediaPageReportGenerator extends PageViewReportGenerator {
     }
 
     public void exit() {
-        ioExecutor.shutdown();
-        cpuExecutor.shutdown();
+        exitExecutor(ioExecutor);
+        exitExecutor(cpuExecutor);
+    }
+
+    private void exitExecutor(ExecutorService pool) {
+        pool.shutdown(); // Disable new tasks from being submitted
         try {
-            ioExecutor.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            System.err.println("error while exiting after timeout: " + e.getMessage());
-        }
-        try {
-            cpuExecutor.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            System.err.println("error while exiting after timeout: " + e.getMessage());
+            // Wait a while for existing tasks to terminate
+            if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+                pool.shutdownNow(); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!pool.awaitTermination(60, TimeUnit.SECONDS))
+                    System.err.println("Pool did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            pool.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
         }
     }
 

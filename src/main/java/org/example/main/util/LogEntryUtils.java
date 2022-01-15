@@ -35,7 +35,7 @@ public class LogEntryUtils {
                         try {
                             return LogEntryUtils.parseLineLogEntry(line);
                         } catch (Exception ex) {
-                            System.out.printf("warning: parsing line %s error, reason %s%n. ", line, ex.getMessage());
+                            System.out.printf("warning: could not parse %s, reason: %s%n. ", line, ex.getMessage());
                         }
                         return null;
                     });
