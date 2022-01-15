@@ -54,7 +54,7 @@ public class WikipediaPageReportGenerator {
                     return Tuples.of(logEntries, tuple.getT2());
                 }, executor))
                 .map(CompletableFuture::join)
-                .peek(result -> Executors.newSingleThreadExecutor().submit(() -> saveToDevicePipeline(result), executor))
+                .peek(result -> CompletableFuture.runAsync(() -> saveToDevicePipeline(result), executor))
                 .filter(Objects::nonNull)
                 .map(Tuple2::getT2)
                 .collect(Collectors.toList());
@@ -89,7 +89,7 @@ public class WikipediaPageReportGenerator {
     public Set<LogEntry> mapSortingLogEntries(List<LogEntry> logEntries) {
         ConcurrentMap<String, PageViewItem> sortedSetMap = new ConcurrentHashMap<>();
         int processedEntriesNum = calcUpdateTopPageViewsMap(logEntries, sortedSetMap);
-        System.out.printf("Processed %d entries in total %n.", processedEntriesNum);
+        System.out.printf("Processed %d entries in total.%n", processedEntriesNum);
         Set<LogEntry> sortedSet = new TreeSet<>();
         for (PageViewItem pvi : sortedSetMap.values()) {
             sortedSet.addAll(pvi.getLogEntries());
@@ -125,9 +125,5 @@ public class WikipediaPageReportGenerator {
             if (i++ % 1000000 == 0) System.out.printf("Processed %d entries%n", i);
         }
         return i;
-    }
-
-    private void reportError(Throwable err) {
-        System.err.println("error while fetching the wikiPageViews:" + err.getMessage());
     }
 }

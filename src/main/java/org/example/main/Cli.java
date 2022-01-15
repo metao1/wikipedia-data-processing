@@ -13,7 +13,6 @@ import org.example.main.util.StandardTimeUtils;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class Cli {
 
@@ -32,6 +31,7 @@ public class Cli {
         var wikiPageOperator = new WikipediaPageViewConnectService(new GzipConnectionService());
         var fileStorage = new WikiPageViewFileOperator();
         var worker = new WikipediaPageReportGenerator(bls, wikiPageOperator, fileStorage, 25);
-        worker.execute(timeList);
+        var operatedPaths = worker.execute(timeList);
+        System.out.println("operatedPaths = " + operatedPaths);
     }
 }
