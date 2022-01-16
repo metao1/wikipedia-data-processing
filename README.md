@@ -18,6 +18,32 @@ Be capable of being run for a range of dates and hours; each hour within the ran
 For your solution, explain:
 
 What additional things would you want to operate this application in a production setting?
+
+#### Since the number of parallel connections to wikipedia is limited to 3 at the same time, one cannot use this application
+#### in production for heavy cluster process. We can increase number of instances by running each instance of this 
+#### application on different servers, and then let them write back to S3 bucket.
+
 What might change about your solution if this application needed to run automatically for each hour of the day?
+### We can use cronejobs that can be easily added in k8s. We might need to pass arguments each time changed prior the last time.
 How would you test this application?
+#### Using current Unit tests, and e2e tests.
+#### For testing e2e run in command line : 
+### ./gradlew build && java -jar build/libs/wikipedia-processor-1.0-SNAPSHOT.jar  
+
+#### The file(s) should be created into page_view folder
+#### For unit testing run in command line : ./gradlew test
 How would you improve on this application design?
+#### However I can pick another strategy to make this application even better, by splitting the services
+#### in different small microservices.
+#### We can creat a microservice fetches wikipages. We can run many  parallel instances to operate at the same time.
+#### Then each microservice can store the files into S3 Bucket.
+#### This can done easily by assigning each microservice a job to read from different time periods.
+#### Each download microservice is responsible to fetch only one set unique files from wikipedia.
+#### This saves the result into S3 bucket to not lose any file in future and to be able to re-process them if needed.
+#### Distributing the files close to the parsers by using S3 helps to increase speed of operation.
+#### Then we crate another microservice to parse each line of file and send the parsed packets to a AMQ or Kafka Broker.
+#### This helps to separate the concerns by running as many instance as we want to fetch files from wikipeages without
+#### being worry of java heap space and synchronization limitation.
+#### Another microservice to aggregate all packets and group them and sort and calculate page view in desired time window.
+#### and normalize table to process further using Kafka Streams.
+#### Another microservice to aggregate all packets and store the result into S3 as reporting result.

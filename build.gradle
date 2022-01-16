@@ -1,8 +1,35 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
-group 'org.example'
+application {
+    mainClassName = 'com.top.wiki.Cli'
+}
+
+mainClassName = 'com.top.wiki.Cli'
+
+jar {
+    manifest {
+        attributes("Main-Class": "$mainClassName")
+    }
+
+    // Include the classpath from the dependencies
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+            // This help solve the issue with jar lunch
+            {
+                exclude "META-INF/*.SF"
+                exclude "META-INF/*.DSA"
+                exclude "META-INF/*.RSA"
+            }
+}
+
+
+tasks.withType(JavaExec) {
+    jvmArgs = ["-Xms1G", "-Xmx4G"]
+}
+
+group 'com.top'
 version '1.0-SNAPSHOT'
 
 repositories {
@@ -10,12 +37,13 @@ repositories {
 }
 
 dependencies {
-    implementation "io.projectreactor:reactor-core:3.4.13"
+    implementation 'io.projectreactor:reactor-core:3.4.14'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'commons-io:commons-io:2.11.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:4.2.0'
-    testImplementation 'io.projectreactor:reactor-test:3.4.13'
+    testImplementation 'io.projectreactor:reactor-test:3.4.14'
 }
 
 test {
