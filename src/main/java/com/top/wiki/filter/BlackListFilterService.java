@@ -62,7 +62,8 @@ public class BlackListFilterService implements FilterService<LogEntry> {
      * @return set of mapped blacklist items by key as by page_title + " " + page_count_view
      */
     private Set<String> buildMapFromBlackList(List<String> blackList) {
-        return blackList.stream()
+        return blackList
+                .parallelStream()
                 .map(line -> {
                     try {
                         return LogEntryUtils.parseLineBlacklistLogEntry(line);
