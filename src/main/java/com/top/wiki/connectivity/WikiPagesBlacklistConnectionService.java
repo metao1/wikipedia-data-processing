@@ -22,6 +22,7 @@ public class WikiPagesBlacklistConnectionService implements BlackListConnectivit
 
     @Override
     public List<String> fetchBlacklist(String blacklistUrl) {
+        System.out.println("fetching blacklist from Url = " + blacklistUrl);
         Path blacklistPath = Path.of(BLACKLIST_DIR, BLACKLIST_FILENAME);
         Objects.requireNonNull(blacklistUrl, "blacklist url can't be null");
         boolean blackListFileMissed = blackListFileMissed(blacklistPath);
@@ -30,6 +31,7 @@ public class WikiPagesBlacklistConnectionService implements BlackListConnectivit
             fetchRemoteBlackListAndSaveInDisk(blacklistUrl, blacklistPath);
         }
         List<String> lines = readBlacklistFile(blacklistPath);
+        System.out.println("fetched blacklist successfully");
         return CollectionUtils.nonEmptyListConvertor(lines);
     }
 

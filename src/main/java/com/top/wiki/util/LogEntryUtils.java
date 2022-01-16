@@ -2,7 +2,6 @@ package com.top.wiki.util;
 
 import com.top.wiki.model.LogEntry;
 import reactor.util.function.Tuple2;
-import reactor.util.function.Tuple3;
 import reactor.util.function.Tuples;
 
 import java.nio.file.Path;
@@ -38,7 +37,7 @@ public class LogEntryUtils {
      */
     public static LogEntry parseLineBlacklistLogEntry(String line) throws IndexOutOfBoundsException {
         String[] s = line.split("\\s");
-        if (s.length < 3) { // malformed input
+        if (s.length < 2) { // malformed input
             throw new IndexOutOfBoundsException("the input must at least 2 spaces separated string");
         }
         return new LogEntry(s[0], s[1], 0);

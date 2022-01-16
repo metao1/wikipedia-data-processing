@@ -4,12 +4,10 @@ import com.top.wiki.connectivity.BlackListConnectivityService;
 import com.top.wiki.model.LogEntry;
 import com.top.wiki.util.LogEntryUtils;
 import com.top.wiki.util.StringUtils;
-import reactor.core.publisher.Flux;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -64,14 +62,18 @@ public class BlackListFilterService implements FilterService<LogEntry> {
      * @return set of mapped blacklist items by key as by page_title + " " + page_count_view
      */
     private Set<String> buildMapFromBlackList(List<String> blackList) {
-        return Flux.fromStream(blackList.stream())
-                .map(LogEntryUtils::parseLineBlacklistLogEntry)
-                .onErrorReturn(new LogEntry("", "", 0))
-                .filter(le -> StringUtils.notBlank(le.getDomainCode()))
+        return blackList.stream()
+                .map(line -> {
+                    try {
+                        return LogEntryUtils.parseLineBlacklistLogEntry(line);
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("warning: cannot parse one line of blacklist input");
+                    }
+                    return LogEntry.empty();
+                })
+                .filter(le -> le != null && StringUtils.notBlank(le.getDomainCode()))
                 .map(LogEntry::getDomainCodeAndPageTitle)
-                .distinct(Function.identity())
-                .collect(Collectors.toSet())
-                .block();
+                .collect(Collectors.toSet());
     }
 
     /**

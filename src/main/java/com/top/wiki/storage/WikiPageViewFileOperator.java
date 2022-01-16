@@ -23,7 +23,7 @@ public class WikiPageViewFileOperator implements StorageService<Set<LogEntry>, P
      */
     @Override
     public boolean write(Set<LogEntry> logEntries, Path out) {
-        try (BufferedWriter bw = Files.newBufferedWriter(out, StandardCharsets.UTF_8, StandardOpenOption.CREATE_NEW)) {
+        try (BufferedWriter bw = Files.newBufferedWriter(out, StandardCharsets.UTF_8, StandardOpenOption.CREATE)) {
             for (LogEntry le : logEntries) {
                 bw.write(le.getDomainCode());
                 bw.write("\t");

@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id("com.google.cloud.tools.jib") version '3.1.4'
 }
 
 application {
@@ -24,6 +25,25 @@ jar {
             }
 }
 
+
+jib {
+    // credentials should be set from outside like e.g.
+    // 'gradle jib -Djib.to.auth.username=$DOCKER_USER -Djib.to.auth.password=$DOCKER_USER_PASSWORD'
+    from {
+        image = 'gradle:7.3.0-jdk17-alpine'
+    }
+    to {
+        image = "${project.name}:${project.version}"
+    }
+    container {
+        jvmFlags = ['-XX:+PrintCommandLineFlags', '-XX:+PrintFlagsFinal',
+                    '-XX:+UseG1GC', '-XX:MaxRAMPercentage=90', '-XX:MaxMetaspaceSize=512m',
+                    '-XX:+Xms=1024M', '-XX:+Xmx=4096M',
+                    '-XX:+UseStringDeduplication', '-XX:+ExitOnOutOfMemoryError'
+        ]
+        creationTime = 'USE_CURRENT_TIMESTAMP'
+    }
+}
 
 tasks.withType(JavaExec) {
     jvmArgs = ["-Xms1G", "-Xmx4G"]

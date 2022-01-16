@@ -28,7 +28,7 @@ What might change about your solution if this application needed to run automati
 How would you test this application?
 #### Using current Unit tests, and e2e tests.
 #### For testing e2e run in command line : 
-### ./gradlew build && java -jar build/libs/wikipedia-processor-1.0-SNAPSHOT.jar  
+### ./gradlew build && java -Xms2G -Xmx4G -jar build/libs/wikipedia-processor-1.0-SNAPSHOT.jar "2018-11-04" "04" "2018-11-04" "06" 
 
 #### The file(s) should be created into page_view folder
 #### For unit testing run in command line : ./gradlew test

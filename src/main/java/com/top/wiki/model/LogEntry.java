@@ -27,6 +27,10 @@ public class LogEntry implements Comparable<LogEntry> {
         this.domainCodeAndPageTitle = domainCode + " " + pageTitle;
     }
 
+    public static LogEntry empty() {
+        return null;
+    }
+
     public String getDomainCode() {
         return domainCode;
     }
