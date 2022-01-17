@@ -6,14 +6,13 @@ import com.top.wiki.filter.BlackListFilterService;
 import com.top.wiki.model.LogEntry;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.LinkedList;
 
 public class BlackListFilterServiceTest {
 
     @Test
-    public void givenUrl_getBlackListFilteredLogEntries_isSuccess() throws IOException {
+    public void givenUrl_getBlackListFilteredLogEntries_isSuccess() {
         var connectionService = new MockedBasicInputService();
         var path = Paths.get("src", "test", "resources", "blacklist.txt");
         var blacklistService = new BlackListFilterService(new WikiPagesBlacklistConnectionService(connectionService));

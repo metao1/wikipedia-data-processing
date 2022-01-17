@@ -22,7 +22,7 @@ public abstract class TimeParser {
     TimeParser() {
         var startStrDate = DateTimeUtil.getLocalDateString();
         var startHour = DateTimeUtil.getLocalTime();
-        var endDateTime = LocalDateTime.parse(startStrDate + " " + startHour, DTF);
+        var endDateTime = LocalDateTime.parse(startStrDate + " " + DateTimeUtil.pad(startHour), DTF);
         var startDate = endDateTime.minusHours(1);
         parseDates(startDate, endDateTime);
     }
