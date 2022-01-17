@@ -1,6 +1,5 @@
 package com.top.wiki.model;
 
-import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -21,7 +20,7 @@ public class PageViewItem {
      * @return min logentry
      */
     public LogEntry minLogEntryPageView() {
-        return logEntries.parallelStream().min(Comparator.naturalOrder()).orElse(null);
+        return logEntries.first();
     }
 
     public void addNewItem(LogEntry le) {

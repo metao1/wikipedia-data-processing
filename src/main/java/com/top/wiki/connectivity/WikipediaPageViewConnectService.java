@@ -49,7 +49,6 @@ public class WikipediaPageViewConnectService {
                 if (strWikiViewPageStream == null) {
                     throw new RuntimeException(String.format("The stream for %s was null.", wikiPageViewStringUrl));
                 }
-                System.out.printf("Thread %s finished downloading.%s%n", Thread.currentThread().getName(), wikiPageViewStringUrl);
                 System.out.printf("Thread %s started parsing %s inputs.%n", Thread.currentThread().getName(), id);
                 mapEntries = LogEntryUtils.mapToLogEntry(strWikiViewPageStream);
                 System.out.printf("Thread %s finished %s processing.%n", Thread.currentThread().getName(), id);

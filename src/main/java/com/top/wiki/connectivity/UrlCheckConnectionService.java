@@ -19,15 +19,6 @@ public class UrlCheckConnectionService implements CheckConnectionService {
 
     @Override
     public boolean exists(String strUrl) throws IOException {
-//        InetAddress inetAddress = InetAddress.getByName(url);
-//        try {
-//            response = client.send(request, HttpResponse.BodyHandlers.discarding());
-//            return response.statusCode() == 200;
-//        } catch (InterruptedException e) {
-//            System.err.println("error while reading from remote host" + e.getMessage());
-//            Thread.currentThread().interrupt();
-//        }
-
         final URL url = new URL(strUrl);
         HttpURLConnection huc = (HttpURLConnection) url.openConnection();
         huc.setRequestMethod("HEAD");

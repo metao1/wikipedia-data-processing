@@ -5,7 +5,6 @@ import com.top.wiki.model.LogEntry;
 import com.top.wiki.util.LogEntryUtils;
 import com.top.wiki.util.StringUtils;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,9 +50,9 @@ public class BlackListFilterService implements FilterService<LogEntry> {
     private List<LogEntry> getBlackListFilteredLogEntries(List<String> blackList, List<LogEntry> logEntries) {
         var map = buildMapFromBlackList(blackList);
         return logEntries
-                .parallelStream()
+                .stream()
                 .filter(item -> missedInBlacklist(map, item))
-                .collect(Collectors.toCollection(LinkedList::new));
+                .collect(Collectors.toList());
     }
 
     /**
@@ -72,7 +71,7 @@ public class BlackListFilterService implements FilterService<LogEntry> {
                     }
                     return LogEntry.empty();
                 })
-                .filter(le -> le != null && StringUtils.notBlank(le.getDomainCode()))
+                .filter(le -> le != null && StringUtils.notBlank(le.getDomainCodeAndPageTitle()))
                 .map(LogEntry::getDomainCodeAndPageTitle)
                 .collect(Collectors.toSet());
     }

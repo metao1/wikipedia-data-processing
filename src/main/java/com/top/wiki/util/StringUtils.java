@@ -24,10 +24,7 @@ public class StringUtils {
      * creates filename from year-month-day hour format
      * filename would format in yearmonthday-hour.txt e.g. 20121202-12.txt
      *
-     * @param year  the input year
-     * @param month the input month
-     * @param day   the input day
-     * @param hour  the input hour
+     * @param time the input time as LocalDatetime to build from
      * @return the filename in string
      */
     public static String buildStringWikiPageViewFilename(LocalDateTime time) {
