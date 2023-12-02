@@ -11,5 +11,5 @@
 /.idea
 /page_views/
 .DS_Store
-gradle
-blacklists
+/gradle
+/blacklists
