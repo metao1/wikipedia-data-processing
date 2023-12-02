@@ -1,0 +1,83 @@
+plugins {
+    id "java"
+    id "application"
+    id("com.google.cloud.tools.jib") version "3.1.4"
+}
+
+application {
+    mainClassName = "com.top.wiki.Cli"
+}
+
+mainClassName = "com.top.wiki.Cli"
+
+jar {
+    manifest {
+        attributes("Main-Class": "$mainClassName")
+    }
+}
+
+
+jib {
+    // credentials should be set from outside like e.g.
+    // "gradle jib -Djib.to.auth.username=$DOCKER_USER -Djib.to.auth.password=$DOCKER_USER_PASSWORD"
+    from {
+        image = "gradle:7.3.0-jdk17-alpine"
+    }
+    to {
+        image = "${project.name}:${project.version}"
+    }
+    container {
+        jvmFlags = ["-XX:+PrintCommandLineFlags", "-XX:+PrintFlagsFinal",
+                    "-XX:+UseG1GC", "-XX:MaxRAMPercentage=90", "-XX:MaxMetaspaceSize=512m",
+                    "-XX:+Xms=1024M", "-XX:+Xmx=4096M",
+                    "-XX:+UseStringDeduplication", "-XX:+ExitOnOutOfMemoryError"
+        ]
+        creationTime = "USE_CURRENT_TIMESTAMP"
+    }
+}
+
+tasks.withType(JavaExec) {
+    jvmArgs = ["-Xms1G", "-Xmx4G"]
+}
+
+group "com.top.wiki"
+version "1.0-SNAPSHOT"
+sourceCompatibility = "17"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.projectreactor:reactor-core:3.6.0"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "commons-io:commons-io:2.15.0"
+
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    // https://stackoverflow.com/questions/53326271/spring-nullable-annotation-generates-unknown-enum-constant-warning
+    //implementation "com.google.code.findbugs:jsr305:3.0.2"
+    implementation "org.slf4j:slf4j-api:2.0.9"
+    implementation "org.slf4j:slf4j-simple:2.0.9"
+
+    testAnnotationProcessor "org.projectlombok:lombok:1.18.30"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
+    testCompileOnly "org.projectlombok:lombok:1.18.30"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.2"
+
+    testImplementation "org.mockito:mockito-junit-jupiter:5.7.0" 
+    testImplementation "org.assertj:assertj-core:3.11.1"
+    testImplementation "io.projectreactor:reactor-test:3.6.0"
+
+}
+
+test {
+    useJUnitPlatform()
+    doFirst {
+        systemProperty "spring.profiles.active", "test"
+    }
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
